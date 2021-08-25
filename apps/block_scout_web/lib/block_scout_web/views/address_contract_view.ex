@@ -93,7 +93,6 @@ defmodule BlockScoutWeb.AddressContractView do
     contract_lines =
       source_code
       |> String.split("\n")
-      |> SmartContract.add_submitted_comment(inserted_at)
 
     max_digits =
       contract_lines

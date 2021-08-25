@@ -3925,7 +3925,11 @@ defmodule Explorer.Chain do
     end
   end
 
-  defp format_source_code_output(smart_contract) do
+  defp format_source_code_output(smart_contract, force_add_comment \\ false)
+
+  defp format_source_code_output(smart_contract, false), do: smart_contract.contract_source_code
+
+  defp format_source_code_output(smart_contract, true) do
     SmartContract.add_submitted_comment(
       smart_contract.contract_source_code,
       smart_contract.inserted_at

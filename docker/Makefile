@@ -5,6 +5,13 @@ BS_CONTAINER_NAME = blockscout
 PG_CONTAINER_NAME = postgres
 PG_CONTAINER_IMAGE = postgres:12.5
 THIS_FILE = $(lastword $(MAKEFILE_LIST))
+COIN = ETH
+NETWORK = BOBA
+SUBNETWORK = BOBA
+ETHEREUM_JSONRPC_VARIANT = geth
+SUPPORTED_CHAINS = []
+ETHEREUM_JSONRPC_HTTP_URL= https://rinkeby.boba.network
+LOGO = /images/boba_logo.svg
 
 ifeq ($(SYSTEM), Linux)
 	HOST=localhost
@@ -291,6 +298,7 @@ endif
 
 migrate_only:
 	@echo "==> Running migrations"
+	@echo $(BLOCKSCOUT_CONTAINER_PARAMS)
 	@docker run --rm \
 					$(BLOCKSCOUT_CONTAINER_PARAMS) \
 					$(DOCKER_IMAGE) /bin/sh -c "echo $$MIX_ENV && mix do ecto.create, ecto.migrate"

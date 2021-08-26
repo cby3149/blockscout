@@ -10,15 +10,15 @@ defmodule Indexer.Fetcher.PendingTransaction do
 
   require Logger
 
-  import EthereumJSONRPC, only: [fetch_pending_transactions: 1]
+  # import EthereumJSONRPC, only: [fetch_pending_transactions: 1]
 
-  alias Ecto.Changeset
-  alias Explorer.Chain
-  alias Explorer.Chain.Cache.Accounts
+  # alias Ecto.Changeset
+  # alias Explorer.Chain
+  # alias Explorer.Chain.Cache.Accounts
   alias Indexer.Fetcher.PendingTransaction
-  alias Indexer.Transform.Addresses
+  # alias Indexer.Transform.Addresses
 
-  @chunk_size 250
+  # @chunk_size 250
 
   # milliseconds
   @default_interval 1_000
@@ -116,58 +116,58 @@ defmodule Indexer.Fetcher.PendingTransaction do
 
   defp task(%__MODULE__{json_rpc_named_arguments: json_rpc_named_arguments} = _state) do
     Logger.metadata(fetcher: :pending_transaction)
+    {:ok, json_rpc_named_arguments}
+    # case fetch_pending_transactions(json_rpc_named_arguments) do
+    #   {:ok, transactions_params} ->
+    #     new_last_fetched_at = NaiveDateTime.utc_now()
 
-    case fetch_pending_transactions(json_rpc_named_arguments) do
-      {:ok, transactions_params} ->
-        new_last_fetched_at = NaiveDateTime.utc_now()
+    #     transactions_params
+    #     |> Stream.map(&Map.put(&1, :earliest_processing_start, new_last_fetched_at))
+    #     |> Stream.chunk_every(@chunk_size)
+    #     |> Enum.each(&import_chunk/1)
 
-        transactions_params
-        |> Stream.map(&Map.put(&1, :earliest_processing_start, new_last_fetched_at))
-        |> Stream.chunk_every(@chunk_size)
-        |> Enum.each(&import_chunk/1)
+    #     {:ok, new_last_fetched_at}
 
-        {:ok, new_last_fetched_at}
+    #   :ignore ->
+    #     :ok
 
-      :ignore ->
-        :ok
+    #   {:error, :timeout} ->
+    #     Logger.error("timeout")
 
-      {:error, :timeout} ->
-        Logger.error("timeout")
+    #     :ok
 
-        :ok
+    #   {:error, {:bad_gateway, _}} ->
+    #     Logger.error("bad_gateway")
 
-      {:error, {:bad_gateway, _}} ->
-        Logger.error("bad_gateway")
-
-        :ok
-    end
+    #     :ok
+    # end
   end
 
-  defp import_chunk(transactions_params) do
-    addresses_params = Addresses.extract_addresses(%{transactions: transactions_params}, pending: true)
+  # defp import_chunk(transactions_params) do
+  #   addresses_params = Addresses.extract_addresses(%{transactions: transactions_params}, pending: true)
 
-    # There's no need to queue up fetching the address balance since theses are pending transactions and cannot have
-    # affected the address balance yet since address balance is a balance at a given block and these transactions are
-    # blockless.
-    case Chain.import(%{
-           addresses: %{params: addresses_params, on_conflict: :nothing},
-           broadcast: :realtime,
-           transactions: %{params: transactions_params, on_conflict: :nothing}
-         }) do
-      {:ok, imported} ->
-        Accounts.drop(imported[:addresses])
-        :ok
+  #   # There's no need to queue up fetching the address balance since theses are pending transactions and cannot have
+  #   # affected the address balance yet since address balance is a balance at a given block and these transactions are
+  #   # blockless.
+  #   case Chain.import(%{
+  #          addresses: %{params: addresses_params, on_conflict: :nothing},
+  #          broadcast: :realtime,
+  #          transactions: %{params: transactions_params, on_conflict: :nothing}
+  #        }) do
+  #     {:ok, imported} ->
+  #       Accounts.drop(imported[:addresses])
+  #       :ok
 
-      {:error, [%Changeset{} | _] = changesets} ->
-        Logger.error(fn -> ["Failed to validate: ", inspect(changesets)] end, step: :import)
-        :ok
+  #     {:error, [%Changeset{} | _] = changesets} ->
+  #       Logger.error(fn -> ["Failed to validate: ", inspect(changesets)] end, step: :import)
+  #       :ok
 
-      {:error, reason} ->
-        Logger.error(fn -> inspect(reason) end, step: :import)
+  #     {:error, reason} ->
+  #       Logger.error(fn -> inspect(reason) end, step: :import)
 
-      {:error, step, failed_value, _changes_so_far} ->
-        Logger.error(fn -> ["Failed to import: ", inspect(failed_value)] end, step: step)
-        :ok
-    end
-  end
+  #     {:error, step, failed_value, _changes_so_far} ->
+  #       Logger.error(fn -> ["Failed to import: ", inspect(failed_value)] end, step: step)
+  #       :ok
+  #   end
+  # end
 end

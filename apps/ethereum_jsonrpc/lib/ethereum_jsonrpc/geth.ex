@@ -5,7 +5,7 @@ defmodule EthereumJSONRPC.Geth do
 
   import EthereumJSONRPC, only: [id_to_params: 1, integer_to_quantity: 1, json_rpc: 2, request: 1]
 
-  alias EthereumJSONRPC.{FetchedBalance, FetchedCode}
+  alias EthereumJSONRPC.{FetchedBalance, FetchedCode, Transactions}
   alias EthereumJSONRPC.Geth.{Calls, Tracer}
 
   @behaviour EthereumJSONRPC.Variant
@@ -56,27 +56,26 @@ defmodule EthereumJSONRPC.Geth do
   """
   @impl EthereumJSONRPC.Variant
   def fetch_pending_transactions(json_rpc_named_arguments) do
-    {:ok, json_rpc_named_arguments}  
-    # with {:ok, transaction_data} <-
-    #        %{id: 1, method: "txpool_content", params: []} |> request() |> json_rpc(json_rpc_named_arguments) do
-    #   transactions_params =
-    #     transaction_data["pending"]
-    #     |> Enum.flat_map(fn {_address, nonce_transactions_map} ->
-    #       nonce_transactions_map
-    #       |> Enum.map(fn {_nonce, transaction} ->
-    #         transaction
-    #       end)
-    #     end)
-    #     |> Transactions.to_elixir()
-    #     |> Transactions.elixir_to_params()
-    #     |> Enum.map(fn params ->
-    #       # txpool_content always returns transaction with 0x0000000000000000000000000000000000000000000000000000000000000000 value in block hash and index is null.
-    #       # https://github.com/ethereum/go-ethereum/issues/19897
-    #       %{params | block_hash: nil, index: nil}
-    #     end)
+    with {:ok, transaction_data} <-
+           %{id: 1, method: "txpool_content", params: []} |> request() |> json_rpc(json_rpc_named_arguments) do
+      transactions_params =
+        transaction_data["pending"]
+        |> Enum.flat_map(fn {_address, nonce_transactions_map} ->
+          nonce_transactions_map
+          |> Enum.map(fn {_nonce, transaction} ->
+            transaction
+          end)
+        end)
+        |> Transactions.to_elixir()
+        |> Transactions.elixir_to_params()
+        |> Enum.map(fn params ->
+          # txpool_content always returns transaction with 0x0000000000000000000000000000000000000000000000000000000000000000 value in block hash and index is null.
+          # https://github.com/ethereum/go-ethereum/issues/19897
+          %{params | block_hash: nil, index: nil}
+        end)
 
-    #   {:ok, transactions_params}
-    # end
+      {:ok, transactions_params}
+    end
   end
 
   defp debug_trace_transaction_requests(id_to_params) when is_map(id_to_params) do
@@ -90,7 +89,8 @@ defmodule EthereumJSONRPC.Geth do
   @tracer File.read!(@tracer_path)
 
   defp debug_trace_transaction_request(%{id: id, hash_data: hash_data}) do
-    request(%{id: id, method: "debug_traceTransaction", params: [hash_data, %{tracer: @tracer}]})
+  #   request(%{id: id, method: "debug_traceTransaction", params: [hash_data, %{tracer: @tracer}]})
+    {:ok, id, hash_data, %{tracer: @tracer}}
   end
 
   defp debug_trace_transaction_responses_to_internal_transactions_params(

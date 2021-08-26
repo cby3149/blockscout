@@ -10,7 +10,7 @@ NETWORK = BOBA
 SUBNETWORK = BOBA
 ETHEREUM_JSONRPC_VARIANT = geth
 SUPPORTED_CHAINS = []
-ETHEREUM_JSONRPC_HTTP_URL= https://rinkeby.boba.network
+ETHEREUM_JSONRPC_HTTP_URL= https://mainnet.boba.network
 LOGO = /images/boba_logo.svg
 
 ifeq ($(SYSTEM), Linux)
